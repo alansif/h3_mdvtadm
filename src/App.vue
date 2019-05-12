@@ -44,7 +44,7 @@
 			<el-table :data="tableData" stripe>
                     <el-table-column
                             v-for="col in cols" :key="col.label"
-                            :prop="col.prop" :label="col.label" :width="col.width">
+                            :prop="col.prop" :label="col.label" :width="col.width" show-overflow-tooltip>
                     </el-table-column>
 			</el-table>
 		</div>
@@ -55,6 +55,19 @@
 <script>
     import {restbase,reserr} from './restapi.js';
 
+    function getStringLen(str) {
+        if (typeof str !== 'string') return 0;
+        let l = str.length;
+        let blen = 0;
+        for(let i=0; i<l; i++) {
+            if ((str.charCodeAt(i) & 0xff00) !== 0) {
+                blen ++;
+            }
+            blen ++;
+        }
+        return blen;
+    }	
+	
 export default {
 	name: 'app',
 	data() {
@@ -74,7 +87,8 @@ export default {
 					CYCLE: this.CYCLE
 				}})
 				.then(response => {
-					const d = response.data.data;
+					const d = response.data;
+//					console.log(d);
 					this.showtable(d);
 				})
 				.catch(error => {
@@ -90,7 +104,9 @@ export default {
 				for(let k in d[0]) {
 					let a = d[0][k];
 					let len = a ? getStringLen(a.toString()) : 8;
+					console.log(a);
 					if (len < 8) len = 8;
+					if (len > 20) len = 20;
 					this.cols.push({prop:k, label:k, width: len * 9 + 16});
 				}
 				this.tableData = d;
