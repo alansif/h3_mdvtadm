@@ -32,6 +32,7 @@
                 </el-select>
             </el-form-item>
 			<el-button type="primary" style="margin-left:40px" @click="query">查询</el-button>
+			<el-button type="primary" style="margin-left:8px" @click="print" :disabled="tableData.length===0">打印</el-button>
 		</el-form>
 	</div>
     <div class="infoframe">
@@ -41,7 +42,11 @@
             </div>
         </div>
 		<div>
-			<el-table :data="tableData" stripe>
+			<el-table id="mydatatable" :data="tableData"
+				row-key="id"
+				:row-class-name="tableRowClassName"
+				@row-dblclick="rowdbclick"
+				>
                     <el-table-column
                             v-for="col in cols" :key="col.label"
                             :prop="col.prop" :label="col.label" :width="col.width" show-overflow-tooltip>
@@ -49,12 +54,29 @@
 			</el-table>
 		</div>
     </div>
+	<el-dialog :visible.sync="dialogTableVisible" width="50%" title="循环步骤">
+		<div id="stepstable">
+			<el-table :data="details" :show-header="false">
+				<el-table-column prop="0"/>
+				<el-table-column prop="1"/>
+			</el-table>
+			<el-table :data="steps">
+				<el-table-column prop="time" label="时间" :width="100"/>
+				<el-table-column prop="step" label="步骤" :width="100"/>
+				<el-table-column prop="info" label="信息" :formatter="formatter"/>
+			</el-table>
+		</div>
+		<div style="text-align:center;padding-top:16px;padding-bottom:20px;">
+			<el-button type="primary" @click="printsteps">打印</el-button>
+		</div>
+	</el-dialog>
   </div>
 </template>
 
 <script>
     import {restbase,reserr} from './restapi.js';
-
+	import {trans} from './trans'
+	
     function getStringLen(str) {
         if (typeof str !== 'string') return 0;
         let l = str.length;
@@ -72,12 +94,28 @@ export default {
 	name: 'app',
 	data() {
 		return {
+			fieldNames: {},
 			fromdate: '',
 			todate: '',
 			CYCLE: '',
 			tableData: [],
-			cols:[]
+			cols:[],
+			dialogTableVisible: false,
+			details: [],
+			steps: []
 		}
+	},
+	mounted() {
+		this.$axios.get(restbase() + 'fieldnames')
+			.then(response => {
+				this.fieldNames = response.data;
+			})
+			.catch(error => {
+				if (error) {
+					console.dir(error);
+					this.$message.error(reserr(error));
+				}
+			});
 	},
 	methods:{
 		query() {
@@ -88,12 +126,10 @@ export default {
 				}})
 				.then(response => {
 					const d = response.data;
-//					console.log(d);
 					this.showtable(d);
 				})
 				.catch(error => {
 					if (error) {
-//						console.dir(error);
 						this.$message.error(reserr(error));
 					}
 				});
@@ -102,23 +138,62 @@ export default {
 			if (d.length > 0) {
 				this.cols = [];
 				for(let k in d[0]) {
+					if (k === "Steps") continue;
 					let a = d[0][k];
-					let len = a ? getStringLen(a.toString()) : 8;
-					console.log(a);
-					if (len < 8) len = 8;
+					let len = a ? getStringLen(a.toString()) : 10;
+					if (len < 10) len = 10;
 					if (len > 20) len = 20;
-					this.cols.push({prop:k, label:k, width: len * 9 + 16});
+					this.cols.push({prop:k, label:this.fieldNames[k]||k, width: len * 9 + 16});
 				}
 				this.tableData = d;
 			} else {
 				this.tableData = [];
 			}
+		},
+		tableRowClassName({row, rowIndex}) {
+			if (row["CYCLE"] === "FAIL") {
+			  return 'fail-row';
+			}
+			return '';
+		},
+		rowdbclick(row, column, event) {
+			this.dialogTableVisible = true;
+			let r = Object.assign({}, row);
+			delete r.Steps;
+			const s = Object.entries(r);
+			this.details = s.map(a => [this.fieldNames[a[0]]||a[0], a[1]]);
+			this.steps = JSON.parse(row.Steps);
+		},
+		formatter(row, column) {
+			for (let n in trans) {
+				if (row.info.includes(n)) {
+					return row.info.replace(n, trans[n]);
+				}
+			}
+			return row.info;
+		},
+		print() {
+			var printHtml = document.getElementById("mydatatable").innerHTML;
+			let wind = window.open("",'newwindow', 'height=300, width=700, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+			wind.document.body.innerHTML = printHtml;
+			wind.print();
+		},
+		printsteps() {
+			let printHtml = document.getElementById("stepstable").innerHTML;
+			let wind = window.open("",'newwindow', 'height=300, width=700, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+			wind.document.body.innerHTML = printHtml;
+			wind.print();
 		}
 	}
 }
 </script>
 
 <style>
+@media print {
+  body {
+    font-size: 6px;
+  }
+}
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -140,7 +215,6 @@ export default {
 }
     .infoframe {
         position: relative;
-        height: 470px;
         width:1000px;
         margin:0 auto;
         border-radius: 4px;
@@ -160,4 +234,10 @@ export default {
     .infoform {
         padding: 30px 170px 10px 130px;
     }
+  .el-table .fail-row {
+    background: #FFCFCF;
+  }
+  div.el-dialog__body {
+	padding: 0 20px;
+  }
 </style>
