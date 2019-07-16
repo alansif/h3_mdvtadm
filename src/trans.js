@@ -26,6 +26,7 @@ export let trans = {
 	"Block not pressurized or not connected":	"堵塞无增压或无连接",
 	"Minor endoscope leak, cycle continuing safely":	"内镜轻微漏气,循环继续平稳进行",
 	"Water inlet flow too low":	"入口水流过低",
+	"Start not allowed: Alcohol level low": "不允许开始:酒精水平低",
 	"No alcohol flow":	"无酒精流",
 	"No flow air channel": "空气通道无流",
 	"Manual control active":	"手动控制激活",
