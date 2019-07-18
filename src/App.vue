@@ -7,13 +7,13 @@
       </div>
     </div>
 	<div>
-	    <el-form :inline="true" label-width="80px" @submit.native.prevent>
-            <el-form-item label="时间段起">
+	    <el-form :inline="true" label-width="60px" @submit.native.prevent>
+            <el-form-item label="日期">
                 <el-date-picker
                         v-model="fromdate"
                         value-format="yyyy-MM-dd"
                         :editable="false"
-                        style="width: 140px">
+                        style="width: 135px">
                 </el-date-picker>
             </el-form-item>
             <el-form-item label="至" label-width="22px">
@@ -21,17 +21,22 @@
                         v-model="todate"
                         value-format="yyyy-MM-dd"
                         :editable="false"
-                        style="width: 140px">
+                        style="width: 135px">
                 </el-date-picker>
             </el-form-item>
             <el-form-item label="状态">
-                <el-select v-model="CYCLE" style="width:110px">
+                <el-select v-model="CYCLE" style="width:90px">
                     <el-option label="全部" value=""></el-option>
                     <el-option label="通过" value="PASS"></el-option>
                     <el-option label="失败" value="FAIL"></el-option>
                 </el-select>
             </el-form-item>
-			<el-button type="primary" style="margin-left:40px" @click="query">查询</el-button>
+            <el-form-item label="机器">
+                <el-select v-model="machine" multiple collapse-tags placeholder="全部" style="width:210px">
+                    <el-option v-for="item in machines" :key="item" :value="item"></el-option>
+                </el-select>
+            </el-form-item>
+			<el-button type="primary" style="margin-left:20px" @click="query">查询</el-button>
 			<el-button type="primary" style="margin-left:8px" @click="print" :disabled="tableData.length===0">打印</el-button>
 		</el-form>
 	</div>
@@ -54,7 +59,7 @@
 			</el-table>
 		</div>
     </div>
-	<el-dialog :visible.sync="dialogTableVisible" width="50%" title="循环步骤">
+	<el-dialog :visible.sync="dialogTableVisible" width="50%" title="洗消循环明细">
 		<div id="stepstable">
 			<el-table :data="details" :show-header="false">
 				<el-table-column prop="0"/>
@@ -95,9 +100,11 @@ export default {
 	data() {
 		return {
 			fieldNames: {},
+			machines: [],
 			fromdate: '',
 			todate: '',
 			CYCLE: '',
+			machine: [],
 			tableData: [],
 			cols:[],
 			dialogTableVisible: false,
@@ -116,13 +123,24 @@ export default {
 					this.$message.error(reserr(error));
 				}
 			});
+		this.$axios.get(restbase() + 'machines')
+			.then(response => {
+				this.machines = response.data;
+			})
+			.catch(error => {
+				if (error) {
+					console.dir(error);
+					this.$message.error(reserr(error));
+				}
+			});
 	},
 	methods:{
 		query() {
 			this.$axios.get(restbase() + 'query',{params:{
 					fromdate: this.fromdate,
 					todate: this.todate,
-					CYCLE: this.CYCLE
+					CYCLE: this.CYCLE,
+					machine: this.machine
 				}})
 				.then(response => {
 					const d = response.data;
