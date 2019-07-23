@@ -115,7 +115,7 @@ export default {
 			dialogTableVisible: false,
 			details: [],
 			steps: [],
-			stepfilters: [[6],[3,4,5,6,7,8,11,12],[4,6,7,8,11,12]],
+			stepfilters: [[],[3,4,5,6,7,8,11,12],[4,6,7,8,11,12]],
 			stepfilter: 0
 		}
 	},
