@@ -65,13 +65,18 @@
 				<el-table-column prop="0"/>
 				<el-table-column prop="1"/>
 			</el-table>
-			<el-table :data="steps">
+			<el-table :data="steps.filter(v=>!stepfilters[stepfilter].includes(parseInt(v.step)))">
 				<el-table-column prop="time" label="时间" :width="100"/>
 				<el-table-column prop="step" label="步骤" :width="100"/>
 				<el-table-column prop="info" label="信息" :formatter="formatter"/>
 			</el-table>
 		</div>
 		<div style="text-align:center;padding-top:16px;padding-bottom:20px;">
+			<el-select v-model="stepfilter" style="width:160px;margin-right:20px;">
+				<el-option key="0" label="原始过程记录" :value="0"/>
+				<el-option key="1" label="无酶清洗程序" :value="1"/>
+				<el-option key="2" label="有酶清洗程序" :value="2"/>
+			</el-select>
 			<el-button type="primary" @click="printsteps">打印</el-button>
 		</div>
 	</el-dialog>
@@ -109,7 +114,9 @@ export default {
 			cols:[],
 			dialogTableVisible: false,
 			details: [],
-			steps: []
+			steps: [],
+			stepfilters: [[6],[3,4,5,6,7,8,11,12],[4,6,7,8,11,12]],
+			stepfilter: 0
 		}
 	},
 	mounted() {
